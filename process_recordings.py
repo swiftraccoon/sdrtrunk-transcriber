@@ -29,14 +29,8 @@ OPENAI_API_KEY = "YOUR_KEY_HERE"
 
 
 radio_id_names = {
-    "1610092": "FCPD Dispatch",
-    "1610051": "Sheriff Dispatch",
-    "1610077": "EMS Dispatch",
-    "2499936": "NCSHP Dispatch",
-    "1610078": "RPD Dispatch",
-    "1610018": "EMS CAD",
-    "2499937": "NCSHP Dispatch",
-    "1610019": "FD CAD",
+    "0000001": "PD Dispatch",
+    "0000002": "Sheriff Dispatch",
 }
 
 
