@@ -1,5 +1,6 @@
 # sdrtrunk-transcriber
-Python file for transcribing MP3 files from SDRTrunk recording capture. Built to be ran in a cronjob.
+Python file for transcribing MP3 files (OpenAI Whisper) from SDRTrunk recording capture. Built to be ran in a cronjob.
+https://platform.openai.com/docs/api-reference/audio
 
 * `simplified_process.py` for those who just want transcriptions.
   * Should work out of the box for you.
