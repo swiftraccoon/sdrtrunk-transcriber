@@ -1,10 +1,10 @@
 # sdrtrunk-transcriber
 Python file for transcribing MP3 files from SDRTrunk recording capture. Built to be ran in a cronjob.
 
-* simplified_process.py for those who just want transcriptions.
+* `simplified_process.py` for those who just want transcriptions.
   * Should work out of the box for you.
 
-* process_recordings.py for an example of what you could be doing.
+* `process_recordings.py` for an example of what you could be doing.
   * not going to work out of the box. it uses custom data sources/databases.
 ----------------------------------------------
 
