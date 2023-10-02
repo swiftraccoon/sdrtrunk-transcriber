@@ -8,4 +8,3 @@ json
 logging
 re
 requests
-pytest
