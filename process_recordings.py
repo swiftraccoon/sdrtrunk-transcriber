@@ -1,14 +1,40 @@
+# Standard library imports
 import os
-import openai
+import time
 import sqlite3
 import xml.etree.ElementTree as ET
-from pydub import AudioSegment
-import time
-import json
-import logging
 import re
+import logging
+import json
+
+# Third-party imports
+from pydub import AudioSegment
+from functools import lru_cache
+import openai
 import requests
 
+# Configurations
+RECORDINGS_DIR = "/home/YOUR_USER/SDRTrunk/recordings"
+XML_PATH = "/home/YOUR_USER/SDRTrunk/playlist/default.xml"
+DATABASE_PATH = "/home/YOUR_USER/SDRTrunk/recordings.db"
+TEN_SIGN_FILE = "/home/YOUR_USER/SDRTrunk/Some_Co_NC_TENSIGN.txt"
+CALLSIGNS_PATH = "/home/YOUR_USER/SDRTrunk/callsigns.db"
+NCSHP_TEN_SIGN_FILE = "/home/YOUR_USER/SDRTrunk/NCSHP_TENCODE.txt"
+SIGNALS_FILE = "/home/YOUR_USER/SDRTrunk/NCSHP_SIGNALS.txt"
+OPENAI_API_KEY = "YOUR_KEY"
+
+# You could also just grab these from your SDRTrunk XML file
+# if you already have accumulated a list of radio IDs there.
+RADIO_ID_NAMES = {
+    "1610092": "FCPD Dispatch",
+    "1610051": "Sheriff Dispatch",
+    "1610077": "EMS Dispatch",
+    "2499936": "NCSHP Dispatch",
+    "1610078": "RPD Dispatch",
+    "1610018": "EMS CAD",
+    "2499937": "NCSHP Dispatch",
+    "1610019": "FD CAD",
+}
 
 logging.basicConfig(
     level=logging.DEBUG,
@@ -19,31 +45,11 @@ logging.basicConfig(
 logger = logging.getLogger()
 
 
-# Configurations
-RECORDINGS_DIR = "/home/YOUR_USER/SDRTrunk/recordings"
-XML_PATH = "/home/YOUR_USER/SDRTrunk/playlist/default.xml"
-DATABASE_PATH = "/home/YOUR_USER/SDRTrunk/recordings.db"
-TEN_SIGN_FILE = "/home/YOUR_USER/SDRTrunk/COUNTY_TENSIGN.txt"
-CALLSIGNS_PATH = "/home/YOUR_USER/SDRTrunk/callsigns.db"
-OPENAI_API_KEY = "YOUR_KEY_HERE"
-
-
-radio_id_names = {
-    "0000001": "PD Dispatch",
-    "0000002": "Sheriff Dispatch",
-}
-
-
 def get_formatted_radio_id(radio_id):
-    name = radio_id_names.get(radio_id)
+    name = RADIO_ID_NAMES.get(radio_id)
     if name:
         return f"{radio_id} ({name})"
     return radio_id
-
-
-def get_duration(file_path):
-    audio = AudioSegment.from_mp3(file_path)
-    return len(audio)
 
 
 def load_callsigns():
@@ -82,47 +88,101 @@ def load_ten_codes(file_path):
     return ten_codes
 
 
-# Function to update the transcription with 10-codes, callsigns, and radio id
-def update_transcription_to_json(transcription, ten_codes, callsigns, radio_id):
+# Function to load signals file
+def load_signals(file_path):
+    with open(file_path, "r") as f:
+        lines = f.readlines()
+    signals = {}
+    for line in lines:
+        signal, description = line.strip().split(" ", 1)
+        signals[signal] = description
+    return signals
+
+
+def extract_ten_codes_from_transcription(transcription, ten_codes):
     extracted_codes = {}
-    extracted_callsigns = {}
 
     # Sort ten_codes by length in descending order before matching
     for code, description in sorted(
         ten_codes.items(), key=lambda x: len(x[0]), reverse=True
     ):
-        # Create two patterns for each ten-code: with and without hyphen
-        code_with_hyphen = code
-        code_without_hyphen = code.replace("10-", "10")
-
-        # Construct regex pattern to match both formats
-        pattern = (
-            r"(?<!\d)("
-            + re.escape(code_with_hyphen)
-            + r"|"
-            + re.escape(code_without_hyphen)
-            + r")(?!\d)"
-        )
-        if re.search(pattern, transcription):
+        normalized_code = normalize_ten_code(code, transcription)
+        if normalized_code:
             extracted_codes[code] = description
-            transcription = transcription.replace(
-                code_without_hyphen, code_with_hyphen
-            )  # normalize to the hyphenated version
+            transcription = transcription.replace(normalized_code, code)
 
-    # Detect callsigns in transcription
+    return extracted_codes, transcription
+
+
+def normalize_ten_code(code, transcription):
+    code_with_hyphen = code
+    code_without_hyphen = code.replace("10-", "10")
+
+    pattern = (
+        r"(?<!\d)("
+        + re.escape(code_with_hyphen)
+        + r"|"
+        + re.escape(code_without_hyphen)
+        + r")(?!\d)"
+    )
+    match = re.search(pattern, transcription)
+    if match:
+        return match.group()
+    return None
+
+
+def extract_callsigns_from_transcription(transcription, callsigns):
+    extracted_callsigns = {}
+
     for callsign, name in callsigns.items():
-        # logger.debug(f"Checking for callsign: {callsign}")
         if callsign in transcription:
             logger.info(f"Detected callsign: {callsign}")
             extracted_callsigns[callsign] = name
 
-    result = {radio_id: transcription}
-    result.update(extracted_codes)  # Merge ten codes into result
-    result.update(extracted_callsigns)  # Merge callsigns into result
+    return extracted_callsigns
+
+
+def extract_signals_from_transcription(transcription, signals):
+    extracted_signals = {}
+
+    # Sort signals by length in descending order before matching
+    for signal, description in sorted(
+        signals.items(), key=lambda x: len(x[0]), reverse=True
+    ):
+        if signal in transcription:
+            extracted_signals[signal] = description
+            transcription = transcription.replace(signal, "")
+
+    return extracted_signals, transcription
+
+
+def update_transcription_to_json(
+    transcription, ten_codes, callsigns, radio_id, signals=None
+):
+    extracted_codes, updated_transcription = extract_ten_codes_from_transcription(
+        transcription, ten_codes
+    )
+    extracted_callsigns = extract_callsigns_from_transcription(
+        updated_transcription, callsigns
+    )
+
+    # If signals provided, extract from transcription
+    if signals:
+        extracted_signals, updated_transcription = extract_signals_from_transcription(
+            updated_transcription, signals
+        )
+    else:
+        extracted_signals = {}
+
+    result = {radio_id: updated_transcription}
+    result.update(extracted_codes)
+    result.update(extracted_callsigns)
+    result.update(extracted_signals)
 
     return json.dumps(result)
 
 
+@lru_cache(maxsize=None)
 def get_talkgroup_name(xml_path, talkgroup_id):
     if not hasattr(get_talkgroup_name, "talkgroup_dict"):
         # Parse the XML file and create a dictionary of talkgroup IDs and names
@@ -204,59 +264,101 @@ def connect_to_database():
     return conn, cur
 
 
-def process_file(file, ten_codes):
+def process_file(file):
     logger.info(f"Processing file: {file}")
     if not file.endswith(".mp3"):
         return
 
     full_path = os.path.join(RECORDINGS_DIR, file)
-    file_duration = str(get_duration(full_path) / 1000)
+    file_duration = get_file_duration(full_path)
 
-    # Check duration and delete if less than 14 seconds
+    # Check duration and delete if less than 9 seconds
     if round(float(file_duration)) < 9:
         os.remove(full_path)
         return
 
-    # Extract details from filename
+    (
+        date,
+        time_str,
+        unixtime,
+        talkgroup_id,
+        only_radio_id,
+        new_path,
+    ) = extract_file_details(file, full_path)
+
+    # Conditionally load ten codes based on talkgroup_id
+    if talkgroup_id in ["52198", "52201"]:
+        ten_codes = load_ten_codes(NCSHP_TEN_SIGN_FILE)
+        signals = load_signals(SIGNALS_FILE)
+    else:
+        ten_codes = load_ten_codes(TEN_SIGN_FILE)
+        signals = None
+
+    transcription = curl_transcribe_audio(new_path)
+    logger.info(f"Transcribed text for {file}: {transcription}")
+
+    updated_transcription_json = format_transcription(
+        transcription, ten_codes, only_radio_id, signals
+    )
+
+    write_transcription_to_file(new_path, updated_transcription_json)
+
+    talkgroup_name = get_talkgroup_name(XML_PATH, talkgroup_id)
+
+    return (
+        date,
+        time_str,
+        unixtime,
+        talkgroup_id,
+        only_radio_id,
+        file_duration,
+        file,
+        new_path,
+        transcription,
+        updated_transcription_json,
+        talkgroup_name,
+    )
+
+
+def format_transcription(transcription, ten_codes, radio_id, signals=None):
+    callsign_data = load_callsigns()
+    radio_id = get_formatted_radio_id(radio_id)
+    return update_transcription_to_json(
+        transcription, ten_codes, callsign_data, radio_id, signals
+    )
+
+
+def get_file_duration(full_path):
+    audio = AudioSegment.from_mp3(full_path)
+    return str(len(audio) / 1000)
+
+
+def extract_file_details(file, full_path):
     date, time_part = file.split("_")[:2]
     time_str = time_part[:2] + ":" + time_part[2:4]
-    unixtime = int(
-        time.mktime(time.strptime(date + " " + time_str, "%Y%m%d %H:%M"))
-    )
+    unixtime = int(time.mktime(time.strptime(date + " " + time_str, "%Y%m%d %H:%M")))
     talkgroup_id = file.split("TO_")[1].split("_")[0]
     only_radio_id = extract_radio_id(file)
-    radio_id = get_formatted_radio_id(only_radio_id)
+    new_path = move_file_based_on_talkgroup(full_path, file, talkgroup_id)
+    return date, time_str, unixtime, talkgroup_id, only_radio_id, new_path
 
-    # Move the file based on talkgroup ID
+
+def move_file_based_on_talkgroup(full_path, file, talkgroup_id):
     new_dir = os.path.join(RECORDINGS_DIR, talkgroup_id)
     if not os.path.exists(new_dir):
         os.mkdir(new_dir)
     new_path = os.path.join(new_dir, file)
     os.rename(full_path, new_path)
+    return new_path
 
-    # Transcribe the audio
-    transcription = curl_transcribe_audio(new_path)
-    logger.info(f"Transcribed text for {file}: {transcription}")
 
-    # Update transcription with 10-codes and callsigns
-    callsign_data = load_callsigns()
-    updated_transcription_json = str(
-        update_transcription_to_json(
-            transcription, ten_codes, callsign_data, radio_id
-        )
-    )
-
-    # Write transcription to a text file
+def write_transcription_to_file(new_path, updated_transcription_json):
     try:
-        logger.info(f"Starting to write to text file for {file}")
+        logger.info(f"Starting to write to text file for {new_path}")
         with open(new_path.replace(".mp3", ".txt"), "w") as text_file:
             text_file.write(updated_transcription_json)
     except Exception as e:
         logger.error(f"Error while writing to text file: {str(e)}")
-
-    # Get the talkgroup name from XML
-    talkgroup_name = get_talkgroup_name(XML_PATH, talkgroup_id)
-    return date, time_str, unixtime, talkgroup_id, radio_id, file_duration, file, new_path, transcription, updated_transcription_json, talkgroup_name
 
 
 def insert_into_database(cur, data):
@@ -268,16 +370,17 @@ def insert_into_database(cur, data):
             """
             INSERT INTO recordings (date, time, unixtime, talkgroup_id, talkgroup_name, radio_id, duration, filename, filepath, transcription, v2transcription)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """, data)
+            """,
+            data,
+        )
     except Exception as e:
         logger.error(f"Error while inserting into database: {str(e)}")
 
 
 def main():
     conn, cur = connect_to_database()
-    ten_codes = load_ten_codes(TEN_SIGN_FILE)
     for file in os.listdir(RECORDINGS_DIR):
-        data = process_file(file, ten_codes)
+        data = process_file(file)
         if data:
             insert_into_database(cur, data)
     conn.commit()
