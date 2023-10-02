@@ -7,7 +7,7 @@ https://platform.openai.com/docs/api-reference/audio
   * Should work out of the box for you.
   * `email_simplified_process.py` with built-in gmail SMTP function
 
-* `process_recordings.py` for an example of what you could be doing.
+* `advanced_processing/process_recordings.py` for an example of what you could be doing.
   * not going to work out of the box. it uses custom data sources/databases.
 
 ----------------------------------------------
