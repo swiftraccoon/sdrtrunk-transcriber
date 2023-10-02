@@ -1,0 +1,6 @@
+Signal 1 Suspect armed and dangerous
+Signal 2 Report of suspected drug trafficking
+Signal 3 Confidential traffic
+Signal 4 Report of vehicle stores/recovered
+Signal 5 Situation under control, no further assistance necessary
+Signal 6 Violator on active probation/parole
