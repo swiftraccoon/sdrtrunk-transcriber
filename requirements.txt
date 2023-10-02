@@ -1,0 +1,11 @@
+openai
+pydub
+sqlite3
+xml.etree.ElementTree
+functools
+time
+json
+logging
+re
+requests
+pytest
