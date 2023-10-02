@@ -76,8 +76,6 @@ This script is designed to process audio files by transcribing their content, ex
         Processes all audio recordings in a specified directory.
         Inserts processed data into the SQLite database.
 
-This script acts as a comprehensive tool for users handling audio recordings, especially relevant for those in areas like law enforcement where specific codes, signals, and callsigns are of interest.
-
 ----------------------------------------------
 * `output_transcription.py` for those who want to pass a filename and get the output in terminal
   * `python output_transcription.py filename.mp3`
