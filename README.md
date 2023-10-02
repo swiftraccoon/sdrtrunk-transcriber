@@ -7,14 +7,15 @@ https://platform.openai.com/docs/api-reference/audio
   * Should work out of the box for you.
   * `email_simplified_process.py` with built-in gmail SMTP function
 
-* `output_transcription.py` for those who want to pass a filename and get the output in terminal
-  * `python output_transcription.py filename.mp3`
-
 * `process_recordings.py` for an example of what you could be doing.
   * not going to work out of the box. it uses custom data sources/databases.
+
+----------------------------------------------
+* `output_transcription.py` for those who want to pass a filename and get the output in terminal
+  * `python output_transcription.py filename.mp3`
 ----------------------------------------------
 
-Example directory structure:
+Example directory structure for `simplified_process.py` or `process_recordings.py`:
 
 Processed recordings:
 ```
