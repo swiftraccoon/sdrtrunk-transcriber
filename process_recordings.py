@@ -462,13 +462,13 @@ def process_file(file):
         time_str,
         unixtime,
         talkgroup_id,
+        talkgroup_name,
         only_radio_id,
         file_duration,
         file,
         new_path,
         transcription,
         updated_transcription_json,
-        talkgroup_name,
     )
 
 
@@ -588,7 +588,7 @@ def insert_into_database(cur, data):
     """
     try:
         logger.info(
-            f"Preparing to insert into SQLite for {data[6]}: Date-{data[0]}, Time-{data[1]}, UnixTime-{data[2]}, TalkgroupID-{data[3]}, RadioID-{data[4]}, Duration-{data[5]}, Path-{data[7]}, Transcription-{data[8]}"
+            f"Preparing to insert into SQLite for {data[6]}: Date-{data[0]}, Time-{data[1]}, UnixTime-{data[2]}, TalkgroupID-{data[3]}, TalkgroupName-{data[10]}, RadioID-{data[4]}, Duration-{data[5]}, Path-{data[7]}, Transcription-{data[8]}, v2Trans-{data[9]}"
         )
         cur.execute(
             """
