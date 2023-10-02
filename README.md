@@ -33,7 +33,45 @@ How to Use:
 
 Remember to keep your OpenAI API key secret and never expose it in public repositories. Always store such sensitive data securely.
 
+
+
 ---------------------------------------------------------
+---------------------------------------------------------
+---------------------------------------------------------
+
+
+
+* `output_transcription.py` for those who want to pass a filename and get the output in terminal
+  * `python output_transcription.py filename.mp3`
+
+Features:
+
+    Convenient Command-Line Usage: Just pass the audio file as a command-line argument, and the script does the rest.
+
+    Focused Transcription Prompt: Uses a specific prompt to guide the transcription model to focus on the context of radio dispatch communication.
+
+    OpenAI API Interaction:
+        Utilizes the OpenAI API endpoint for audio transcriptions.
+        Supports the "whisper-1" model.
+        Custom headers for authorization.
+        Requests are formatted specifically for audio content related to dispatch and emergency services.
+
+    Output Format: The script prints the JSON response from the OpenAI API, making it easy to parse or further process if required.
+
+How to Use:
+
+    Replace OPENAI_API_KEY with your actual OpenAI API key.
+    Run the script in the command line and pass the path of your audio file as an argument, like so:
+
+    python script_name.py path_to_audio_file.mp3
+
+
+
+---------------------------------------------------------
+---------------------------------------------------------
+---------------------------------------------------------
+
+
 
 * `advanced_processing/process_recordings.py` for an example of what you could be doing.
   * not going to work out of the box. it uses custom data sources/databases.
@@ -75,31 +113,6 @@ This script is designed to process audio files by transcribing their content, ex
     Main Execution:
         Processes all audio recordings in a specified directory.
         Inserts processed data into the SQLite database.
-
-----------------------------------------------
-* `output_transcription.py` for those who want to pass a filename and get the output in terminal
-  * `python output_transcription.py filename.mp3`
-
-Features:
-
-    Convenient Command-Line Usage: Just pass the audio file as a command-line argument, and the script does the rest.
-
-    Focused Transcription Prompt: Uses a specific prompt to guide the transcription model to focus on the context of radio dispatch communication.
-
-    OpenAI API Interaction:
-        Utilizes the OpenAI API endpoint for audio transcriptions.
-        Supports the "whisper-1" model.
-        Custom headers for authorization.
-        Requests are formatted specifically for audio content related to dispatch and emergency services.
-
-    Output Format: The script prints the JSON response from the OpenAI API, making it easy to parse or further process if required.
-
-How to Use:
-
-    Replace OPENAI_API_KEY with your actual OpenAI API key.
-    Run the script in the command line and pass the path of your audio file as an argument, like so:
-
-    python script_name.py path_to_audio_file.mp3
 
 ----------------------------------------------
 
