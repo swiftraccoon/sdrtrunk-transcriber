@@ -46,6 +46,15 @@ logger = logging.getLogger()
 
 
 def get_formatted_radio_id(radio_id):
+    """
+    Returns a formatted string containing the radio ID and its corresponding name (if available).
+
+    Args:
+        radio_id (str): The radio ID to format.
+
+    Returns:
+        str: A formatted string containing the radio ID and its corresponding name (if available).
+    """
     name = RADIO_ID_NAMES.get(radio_id)
     if name:
         return f"{radio_id} ({name})"
@@ -53,6 +62,12 @@ def get_formatted_radio_id(radio_id):
 
 
 def load_callsigns():
+    """
+    Load the most recent data for each unique callsign from the callsign_data table in the SQLite database located at CALLSIGNS_PATH.
+
+    Returns:
+    dict: A dictionary where the keys are callsigns and the values are the corresponding names.
+    """
     conn = sqlite3.connect(CALLSIGNS_PATH)
     cur = conn.cursor()
 
@@ -77,8 +92,16 @@ def load_callsigns():
     return callsigns
 
 
-# Function to load 10-codes from the file
 def load_ten_codes(file_path):
+    """
+    Load ten codes from a file and return a dictionary of code-description pairs.
+
+    Args:
+        file_path (str): The path to the file containing ten codes.
+
+    Returns:
+        dict: A dictionary of ten codes with their descriptions.
+    """
     with open(file_path, "r") as f:
         lines = f.readlines()
     ten_codes = {}
@@ -88,8 +111,16 @@ def load_ten_codes(file_path):
     return ten_codes
 
 
-# Function to load signals file
 def load_signals(file_path):
+    """
+    Load signals from a file and return them as a dictionary.
+
+    Args:
+        file_path (str): The path to the file containing the signals.
+
+    Returns:
+        dict: A dictionary containing the signals and their descriptions.
+    """
     with open(file_path, "r") as f:
         lines = f.readlines()
     signals = {}
@@ -100,6 +131,16 @@ def load_signals(file_path):
 
 
 def extract_ten_codes_from_transcription(transcription, ten_codes):
+    """
+    Extracts ten codes from a given transcription using a dictionary of ten codes.
+
+    Args:
+        transcription (str): The transcription to extract ten codes from.
+        ten_codes (dict): A dictionary of ten codes to match against.
+
+    Returns:
+        A tuple containing a dictionary of extracted ten codes and the updated transcription with the extracted codes removed.
+    """
     extracted_codes = {}
 
     # Sort ten_codes by length in descending order before matching
@@ -115,6 +156,18 @@ def extract_ten_codes_from_transcription(transcription, ten_codes):
 
 
 def normalize_ten_code(code, transcription):
+    """
+    Normalizes a 10-code by replacing any occurrences of "10-" with "10" in the given code,
+    and then searches for the normalized code in the given transcription using a regular expression.
+    If a match is found, returns the matched code. Otherwise, returns None.
+
+    Args:
+        code (str): The 10-code to normalize and search for.
+        transcription (str): The text to search for the normalized 10-code in.
+
+    Returns:
+        str or None: The matched 10-code if found, or None if not found.
+    """
     code_with_hyphen = code
     code_without_hyphen = code.replace("10-", "10")
 
@@ -132,6 +185,16 @@ def normalize_ten_code(code, transcription):
 
 
 def extract_callsigns_from_transcription(transcription, callsigns):
+    """
+    Extracts callsigns from a given transcription and returns a dictionary of extracted callsigns and their corresponding names.
+
+    Args:
+        transcription (str): The transcription to extract callsigns from.
+        callsigns (dict): A dictionary of callsigns and their corresponding names.
+
+    Returns:
+        dict: A dictionary of extracted callsigns and their corresponding names.
+    """
     extracted_callsigns = {}
 
     for callsign, name in callsigns.items():
@@ -143,6 +206,17 @@ def extract_callsigns_from_transcription(transcription, callsigns):
 
 
 def extract_signals_from_transcription(transcription, signals):
+    """
+    Extracts signals from a given transcription by matching them with a dictionary of known signals.
+
+    Args:
+        transcription (str): The transcription to extract signals from.
+        signals (dict): A dictionary of known signals and their descriptions.
+
+    Returns:
+        tuple: A tuple containing a dictionary of extracted signals and their descriptions, and the remaining transcription
+               after all extracted signals have been removed.
+    """
     extracted_signals = {}
 
     # Sort signals by length in descending order before matching
@@ -159,6 +233,19 @@ def extract_signals_from_transcription(transcription, signals):
 def update_transcription_to_json(
     transcription, ten_codes, callsigns, radio_id, signals=None
 ):
+    """
+    Update the transcription with extracted ten codes, callsigns, and signals and return the result as a JSON string.
+
+    Args:
+        transcription (str): The original transcription to update.
+        ten_codes (list): A list of ten codes to extract from the transcription.
+        callsigns (list): A list of callsigns to extract from the transcription.
+        radio_id (str): The ID of the radio.
+        signals (list, optional): A list of signals to extract from the transcription. Defaults to None.
+
+    Returns:
+        str: A JSON string containing the updated transcription, extracted ten codes, callsigns, and signals.
+    """
     extracted_codes, updated_transcription = extract_ten_codes_from_transcription(
         transcription, ten_codes
     )
@@ -183,7 +270,17 @@ def update_transcription_to_json(
 
 
 @lru_cache(maxsize=None)
-def get_talkgroup_name(xml_path, talkgroup_id):
+def get_talkgroup_name(xml_path: str, talkgroup_id: str) -> str:
+    """
+    Given an XML file path and a talkgroup ID, returns the name of the talkgroup.
+
+    Args:
+        xml_path (str): The path to the XML file containing talkgroup information.
+        talkgroup_id (str): The ID of the talkgroup to retrieve the name for.
+
+    Returns:
+        str: The name of the talkgroup with the given ID, or None if the ID is not found.
+    """
     if not hasattr(get_talkgroup_name, "talkgroup_dict"):
         # Parse the XML file and create a dictionary of talkgroup IDs and names
         tree = ET.parse(xml_path)
@@ -198,6 +295,15 @@ def get_talkgroup_name(xml_path, talkgroup_id):
 
 
 def pyapi_transcribe_audio(file_path):
+    """
+    Transcribes audio from a file using OpenAI's Audio API.
+
+    Args:
+        file_path (str): The path to the audio file to transcribe.
+
+    Returns:
+        str: The transcription of the audio file.
+    """
     openai.api_key = OPENAI_API_KEY
     audio_file = open(file_path, "rb")
     transcript = openai.Audio.transcribe("whisper-1", audio_file)
@@ -205,6 +311,15 @@ def pyapi_transcribe_audio(file_path):
 
 
 def curl_transcribe_audio(file_path):
+    """
+    Transcribes audio from a file using OpenAI's API.
+
+    Args:
+        file_path (str): The path to the audio file to be transcribed.
+
+    Returns:
+        str: The transcription of the audio file in JSON format.
+    """
     # Define the endpoint and your API key
     url = "https://api.openai.com/v1/audio/transcriptions"
     api_key = OPENAI_API_KEY
@@ -234,6 +349,15 @@ def curl_transcribe_audio(file_path):
 
 
 def extract_radio_id(filename):
+    """
+    Extracts the radio ID from a given filename.
+
+    Args:
+        filename (str): The name of the file to extract the radio ID from.
+
+    Returns:
+        str: The extracted radio ID if found, otherwise "Unknown ID".
+    """
     match = re.search(r"FROM_(\d+)", filename)
     if match:
         return match.group(1)
@@ -242,6 +366,13 @@ def extract_radio_id(filename):
 
 
 def connect_to_database():
+    """
+    Connects to the database and creates a table if it doesn't exist.
+
+    Returns:
+    conn (sqlite3.Connection): Connection object to the database.
+    cur (sqlite3.Cursor): Cursor object to execute SQL queries.
+    """
     conn = sqlite3.connect(DATABASE_PATH)
     cur = conn.cursor()
     cur.execute(
@@ -265,6 +396,27 @@ def connect_to_database():
 
 
 def process_file(file):
+    """
+    Process a given audio file by transcribing it, formatting the transcription,
+    and writing the formatted transcription to a file.
+
+    Args:
+        file (str): The name of the audio file to process.
+
+    Returns:
+        tuple: A tuple containing the following information:
+            - date (str): The date of the recording.
+            - time_str (str): The time of the recording in string format.
+            - unixtime (float): The time of the recording in Unix time format.
+            - talkgroup_id (str): The ID of the talkgroup associated with the recording.
+            - only_radio_id (str): The ID of the radio associated with the recording.
+            - file_duration (float): The duration of the audio file in seconds.
+            - file (str): The name of the audio file.
+            - new_path (str): The path to the processed audio file.
+            - transcription (str): The raw transcription of the audio file.
+            - updated_transcription_json (str): The formatted transcription of the audio file in JSON format.
+            - talkgroup_name (str): The name of the talkgroup associated with the recording.
+    """
     logger.info(f"Processing file: {file}")
     if not file.endswith(".mp3"):
         return
@@ -321,6 +473,18 @@ def process_file(file):
 
 
 def format_transcription(transcription, ten_codes, radio_id, signals=None):
+    """
+    Formats the given transcription with the provided ten codes, radio ID, and signals data.
+
+    Args:
+        transcription (str): The transcription to format.
+        ten_codes (dict): A dictionary of ten codes to use for formatting.
+        radio_id (str): The radio ID to use for formatting.
+        signals (list, optional): A list of signals data to use for formatting.
+
+    Returns:
+        dict: The formatted transcription as a dictionary.
+    """
     callsign_data = load_callsigns()
     radio_id = get_formatted_radio_id(radio_id)
     return update_transcription_to_json(
@@ -329,11 +493,36 @@ def format_transcription(transcription, ten_codes, radio_id, signals=None):
 
 
 def get_file_duration(full_path):
+    """
+    Returns the duration of an audio file in seconds.
+
+    Args:
+        full_path (str): The full path of the audio file.
+
+    Returns:
+        str: The duration of the audio file in seconds.
+    """
     audio = AudioSegment.from_mp3(full_path)
     return str(len(audio) / 1000)
 
 
 def extract_file_details(file, full_path):
+    """
+    Extracts details from a given file name and full path.
+
+    Args:
+        file (str): The name of the file.
+        full_path (str): The full path of the file.
+
+    Returns:
+        tuple: A tuple containing the following details:
+            - date (str): The date of the recording in YYYYMMDD format.
+            - time_str (str): The time of the recording in HH:MM format.
+            - unixtime (int): The Unix timestamp of the recording.
+            - talkgroup_id (str): The ID of the talkgroup.
+            - only_radio_id (str): The ID of the radio.
+            - new_path (str): The new path of the file after it has been moved based on the talkgroup ID.
+    """
     date, time_part = file.split("_")[:2]
     time_str = time_part[:2] + ":" + time_part[2:4]
     unixtime = int(time.mktime(time.strptime(date + " " + time_str, "%Y%m%d %H:%M")))
@@ -343,7 +532,18 @@ def extract_file_details(file, full_path):
     return date, time_str, unixtime, talkgroup_id, only_radio_id, new_path
 
 
-def move_file_based_on_talkgroup(full_path, file, talkgroup_id):
+def move_file_based_on_talkgroup(full_path: str, file: str, talkgroup_id: str) -> str:
+    """
+    Moves a file to a directory based on its talkgroup ID.
+
+    Args:
+        full_path (str): The full path of the file to be moved.
+        file (str): The name of the file to be moved.
+        talkgroup_id (str): The talkgroup ID used to determine the directory to move the file to.
+
+    Returns:
+        str: The new path of the moved file.
+    """
     new_dir = os.path.join(RECORDINGS_DIR, talkgroup_id)
     if not os.path.exists(new_dir):
         os.mkdir(new_dir)
@@ -353,6 +553,19 @@ def move_file_based_on_talkgroup(full_path, file, talkgroup_id):
 
 
 def write_transcription_to_file(new_path, updated_transcription_json):
+    """
+    Writes the updated transcription JSON to a text file with the same name as the input audio file, but with a .txt extension.
+
+    Args:
+        new_path (str): The path to the input audio file.
+        updated_transcription_json (str): The updated transcription JSON to be written to the text file.
+
+    Raises:
+        Exception: If there is an error while writing to the text file.
+
+    Returns:
+        None
+    """
     try:
         logger.info(f"Starting to write to text file for {new_path}")
         with open(new_path.replace(".mp3", ".txt"), "w") as text_file:
@@ -362,6 +575,17 @@ def write_transcription_to_file(new_path, updated_transcription_json):
 
 
 def insert_into_database(cur, data):
+    """
+    Inserts recording data into SQLite database.
+
+    Args:
+        cur: SQLite cursor object.
+        data: Tuple containing recording data in the following order:
+            (date, time, unixtime, talkgroup_id, talkgroup_name, radio_id, duration, filename, filepath, transcription, v2transcription)
+
+    Returns:
+        None
+    """
     try:
         logger.info(
             f"Preparing to insert into SQLite for {data[6]}: Date-{data[0]}, Time-{data[1]}, UnixTime-{data[2]}, TalkgroupID-{data[3]}, RadioID-{data[4]}, Duration-{data[5]}, Path-{data[7]}, Transcription-{data[8]}"
@@ -378,6 +602,12 @@ def insert_into_database(cur, data):
 
 
 def main():
+    """
+    Process all recordings in the specified directory and insert the data into a database.
+
+    Returns:
+        None
+    """
     conn, cur = connect_to_database()
     for file in os.listdir(RECORDINGS_DIR):
         data = process_file(file)
