@@ -2,6 +2,7 @@ import os
 from pydub import AudioSegment
 import azure.cognitiveservices.speech as speechsdk
 
+
 def transcribe_mp3_to_text(mp3_path, azure_subscription_key, azure_region):
     # Convert MP3 to WAV
     audio = AudioSegment.from_mp3(mp3_path)
@@ -9,9 +10,13 @@ def transcribe_mp3_to_text(mp3_path, azure_subscription_key, azure_region):
     audio.export(wav_path, format="wav")
 
     # Setup Azure Speech SDK
-    speech_config = speechsdk.SpeechConfig(subscription=azure_subscription_key, region=azure_region)
+    speech_config = speechsdk.SpeechConfig(
+        subscription=azure_subscription_key, region=azure_region
+    )
     audio_input = speechsdk.AudioConfig(filename=wav_path)
-    speech_recognizer = speechsdk.SpeechRecognizer(speech_config=speech_config, audio_config=audio_input)
+    speech_recognizer = speechsdk.SpeechRecognizer(
+        speech_config=speech_config, audio_config=audio_input
+    )
 
     # Transcribe
     result = speech_recognizer.recognize_once()
@@ -27,8 +32,11 @@ def transcribe_mp3_to_text(mp3_path, azure_subscription_key, azure_region):
         cancellation_details = result.cancellation_details
         return f"Speech Recognition canceled: {cancellation_details.reason}. {cancellation_details.error_details}"
 
+
 # Usage
 # Replace 'YOUR_AZURE_SUBSCRIPTION_KEY' with your Azure subscription key.
 # Replace 'YOUR_AZURE_REGION' with the region associated with your subscription.
-transcription = transcribe_mp3_to_text("path_to_your_file.mp3", "YOUR_AZURE_SUBSCRIPTION_KEY", "YOUR_AZURE_REGION")
+transcription = transcribe_mp3_to_text(
+    "path_to_your_file.mp3", "YOUR_AZURE_SUBSCRIPTION_KEY", "YOUR_AZURE_REGION"
+)
 print(transcription)
