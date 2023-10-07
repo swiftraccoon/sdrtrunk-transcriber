@@ -12,6 +12,7 @@ from pydub import AudioSegment
 from functools import lru_cache
 import openai
 import requests
+import shutil
 
 # Configurations
 RECORDINGS_DIR = "/home/YOUR_USER/SDRTrunk/recordings"
@@ -604,6 +605,30 @@ def insert_into_database(cur, data):
         logger.error(f"Error while inserting into database: {str(e)}")
 
 
+def find_and_move_mp3_without_txt():
+    """
+    Find MP3 files in subdirectories of RECORDINGS_DIR that do not have an associated TXT file,
+    and move them back to the root directory for processing.
+    """
+    for subdir, _, files in os.walk(RECORDINGS_DIR):
+        if subdir == RECORDINGS_DIR:  # Skip the root directory
+            continue
+
+        mp3_files = [f for f in files if f.endswith('.mp3')]
+        txt_files = [f.replace('.txt', '') for f in files if f.endswith('.txt')]
+
+        moved_files = []
+
+        for mp3 in mp3_files:
+            mp3_base = mp3.replace('.mp3', '')
+            if mp3_base not in txt_files:
+                logger.info(f"Moving {mp3} to root directory")
+                src_path = os.path.join(subdir, mp3)
+                dest_path = os.path.join(RECORDINGS_DIR, mp3)
+                shutil.move(src_path, dest_path)  # Move the file
+                moved_files.append(mp3)
+
+
 def main():
     """
     Process all recordings in the specified directory and insert the data into a database.
@@ -611,6 +636,7 @@ def main():
     Returns:
         None
     """
+    find_and_move_mp3_without_txt()
     conn, cur = connect_to_database()
     for file in os.listdir(RECORDINGS_DIR):
         data = process_file(file)
