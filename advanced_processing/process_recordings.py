@@ -125,8 +125,9 @@ def load_signals(file_path):
         lines = f.readlines()
     signals = {}
     for line in lines:
-        signal, description = line.strip().split(" ", 1)
-        signals[signal] = description
+        signal, description = line.strip().split(" ", 2)[0:2]  # Get the first two words as the signal
+        signal_key = " ".join(signal)  # Combine them to form the key
+        signals[signal_key.lower()] = description  # Convert to lowercase
     return signals
 
 
@@ -218,17 +219,17 @@ def extract_signals_from_transcription(transcription, signals):
                after all extracted signals have been removed.
     """
     extracted_signals = {}
+    transcription_lower = transcription.lower()  # Convert to lowercase
 
-    # Sort signals by length in descending order before matching
     for signal, description in sorted(
         signals.items(), key=lambda x: len(x[0]), reverse=True
     ):
-        if signal in transcription:
+        if signal.lower() in transcription_lower:  # Convert to lowercase
             extracted_signals[signal] = description
-            transcription = transcription.replace(signal, "")
+            # Uncomment the next line if you want to remove the signal from the transcription
+            # transcription_lower = transcription_lower.replace(signal.lower(), "")
 
     return extracted_signals, transcription
-
 
 def update_transcription_to_json(
     transcription, ten_codes, callsigns, radio_id, signals=None
@@ -241,7 +242,7 @@ def update_transcription_to_json(
         ten_codes (list): A list of ten codes to extract from the transcription.
         callsigns (list): A list of callsigns to extract from the transcription.
         radio_id (str): The ID of the radio.
-        signals (list, optional): A list of signals to extract from the transcription. Defaults to None.
+        signals (dict, optional): A dictionary of extracted signals and their descriptions. Defaults to None.
 
     Returns:
         str: A JSON string containing the updated transcription, extracted ten codes, callsigns, and signals.
@@ -253,18 +254,11 @@ def update_transcription_to_json(
         updated_transcription, callsigns
     )
 
-    # If signals provided, extract from transcription
-    if signals:
-        extracted_signals, updated_transcription = extract_signals_from_transcription(
-            updated_transcription, signals
-        )
-    else:
-        extracted_signals = {}
-
     result = {radio_id: updated_transcription}
     result.update(extracted_codes)
     result.update(extracted_callsigns)
-    result.update(extracted_signals)
+    if signals:
+        result.update(signals)  # Integrating the signal descriptions
 
     return json.dumps(result)
 
@@ -439,7 +433,7 @@ def process_file(file):
     ) = extract_file_details(file, full_path)
 
     # Conditionally load ten codes based on talkgroup_id
-    if talkgroup_id in ["52198", "52201"]:
+    if talkgroup_id in ["52198", "52199", "52201"]:
         ten_codes = load_ten_codes(NCSHP_TEN_SIGN_FILE)
         signals = load_signals(SIGNALS_FILE)
     else:
@@ -487,8 +481,17 @@ def format_transcription(transcription, ten_codes, radio_id, signals=None):
     """
     callsign_data = load_callsigns()
     radio_id = get_formatted_radio_id(radio_id)
+
+    # Extract signals from transcription
+    # Check if signals is not None before attempting to extract
+    if signals:
+        extracted_signals, new_transcription = extract_signals_from_transcription(transcription, signals)
+    else:
+        extracted_signals = {}
+        new_transcription = transcription
+
     return update_transcription_to_json(
-        transcription, ten_codes, callsign_data, radio_id, signals
+        new_transcription, ten_codes, callsign_data, radio_id, extracted_signals
     )
 
 
