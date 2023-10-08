@@ -1,11 +1,8 @@
-#include <iostream>
-#include <fstream>
-#include <string>
-#include <curl/curl.h>
-#include <json/json.h>
+#include "curlHelper.h"
+#include <stdexcept>
 
 const std::string API_URL = "https://api.openai.com/v1/audio/transcriptions";
-const std::string API_KEY = "YOUR_KEY_HERE";
+const std::string API_KEY = "KEY";
 
 size_t WriteCallback(void *contents, size_t size, size_t nmemb, void *userp)
 {
@@ -88,23 +85,4 @@ std::string curl_transcribe_audio(const std::string &file_path)
     curl_mime_free(mime);
 
     return response;
-}
-
-int main(int argc, char *argv[])
-{
-    if (argc < 2)
-    {
-        std::cout << "Usage: ./program <file_path>" << std::endl;
-        return 1;
-    }
-    std::string file_path = argv[1];
-    try
-    {
-        std::cout << curl_transcribe_audio(file_path) << std::endl;
-    }
-    catch (const std::exception &e)
-    {
-        std::cerr << "Error: " << e.what() << std::endl;
-    }
-    return 0;
 }
