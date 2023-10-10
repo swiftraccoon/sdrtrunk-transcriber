@@ -1,3 +1,4 @@
+(started a C++ version: https://github.com/swiftraccoon/cpp-sdrtrunk-transcriber)
 # SDRTrunk Transcriber
 * `simplified_process.py` for those who just want transcriptions.
   * `email_simplified_process.py` with built-in gmail SMTP function
