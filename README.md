@@ -145,8 +145,3 @@ Files to be processed:
 /home/YOUR_USER/SDRTrunk/recordings/20231001_173127SOMEname-Control__TO_41003_FROM_1610051.mp3
 /home/YOUR_USER/SDRTrunk/recordings/20231001_173133SOMEname-Control__TO_41003_FROM_1610051.mp3
 ```
-
---------------------------------------------
-Here is a website I built around this data (not included in this repo):
-
-![Screenshot](https://github.com/swiftraccoon/sdrtrunk-transcriber/assets/47705353/d8611536-e7d8-4535-9502-0b511277ff4c)
