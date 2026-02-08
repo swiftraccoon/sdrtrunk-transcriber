@@ -15,14 +15,14 @@ import requests
 import shutil
 
 # Configurations
-RECORDINGS_DIR = "/home/YOUR_USER/SDRTrunk/recordings"
-XML_PATH = "/home/YOUR_USER/SDRTrunk/playlist/default.xml"
-DATABASE_PATH = "/home/YOUR_USER/SDRTrunk/recordings.db"
-TEN_SIGN_FILE = "/home/YOUR_USER/SDRTrunk/Some_Co_NC_TENSIGN.txt"
-CALLSIGNS_PATH = "/home/YOUR_USER/SDRTrunk/callsigns.db"
-NCSHP_TEN_SIGN_FILE = "/home/YOUR_USER/SDRTrunk/NCSHP_TENCODE.txt"
-SIGNALS_FILE = "/home/YOUR_USER/SDRTrunk/NCSHP_SIGNALS.txt"
-OPENAI_API_KEY = "YOUR_KEY"
+RECORDINGS_DIR = os.environ.get("RECORDINGS_DIR", "/home/YOUR_USER/SDRTrunk/recordings")
+XML_PATH = os.environ.get("XML_PATH", "/home/YOUR_USER/SDRTrunk/playlist/default.xml")
+DATABASE_PATH = os.environ.get("DATABASE_PATH", "/home/YOUR_USER/SDRTrunk/recordings.db")
+TEN_SIGN_FILE = os.environ.get("TEN_SIGN_FILE", "/home/YOUR_USER/SDRTrunk/Some_Co_NC_TENSIGN.txt")
+CALLSIGNS_PATH = os.environ.get("CALLSIGNS_PATH", "/home/YOUR_USER/SDRTrunk/callsigns.db")
+NCSHP_TEN_SIGN_FILE = os.environ.get("NCSHP_TEN_SIGN_FILE", "/home/YOUR_USER/SDRTrunk/NCSHP_TENCODE.txt")
+SIGNALS_FILE = os.environ.get("SIGNALS_FILE", "/home/YOUR_USER/SDRTrunk/NCSHP_SIGNALS.txt")
+OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "YOUR_KEY")
 
 # You could also just grab these from your SDRTrunk XML file
 # if you already have accumulated a list of radio IDs there.
@@ -299,10 +299,10 @@ def pyapi_transcribe_audio(file_path):
     Returns:
         str: The transcription of the audio file.
     """
-    openai.api_key = OPENAI_API_KEY
+    client = openai.OpenAI(api_key=OPENAI_API_KEY)
     audio_file = open(file_path, "rb")
-    transcript = openai.Audio.transcribe("whisper-1", audio_file)
-    return str(transcript)
+    transcript = client.audio.transcriptions.create(model="whisper-1", file=audio_file)
+    return transcript.text
 
 
 def curl_transcribe_audio(file_path):

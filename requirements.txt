@@ -1,0 +1,20 @@
+# Core - OpenAI API scripts
+openai>=1.0.0
+requests
+
+# Uncomment below based on which script(s) you use:
+
+# azure_transcription.py
+# pydub
+# azure-cognitiveservices-speech
+
+# google_cloud_transcription.py
+# google-cloud-speech
+
+# local_faster_whisper/
+# faster-whisper
+# watchdog
+# mutagen
+
+# advanced_processing/process_recordings.py
+# pydub

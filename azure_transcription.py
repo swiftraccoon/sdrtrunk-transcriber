@@ -34,9 +34,7 @@ def transcribe_mp3_to_text(mp3_path, azure_subscription_key, azure_region):
 
 
 # Usage
-# Replace 'YOUR_AZURE_SUBSCRIPTION_KEY' with your Azure subscription key.
-# Replace 'YOUR_AZURE_REGION' with the region associated with your subscription.
-transcription = transcribe_mp3_to_text(
-    "path_to_your_file.mp3", "YOUR_AZURE_SUBSCRIPTION_KEY", "YOUR_AZURE_REGION"
-)
+subscription_key = os.environ.get("AZURE_SUBSCRIPTION_KEY", "YOUR_AZURE_SUBSCRIPTION_KEY")
+region = os.environ.get("AZURE_REGION", "YOUR_AZURE_REGION")
+transcription = transcribe_mp3_to_text("path_to_your_file.mp3", subscription_key, region)
 print(transcription)

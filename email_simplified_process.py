@@ -16,18 +16,14 @@ logger = logging.getLogger()
 
 
 # Configurations
-RECORDINGS_DIR = "/home/YOUR_USER/SDRTrunk/recordings"
-OPENAI_API_KEY = "YOUR_KEY_HERE"
+RECORDINGS_DIR = os.environ.get("RECORDINGS_DIR", "/home/YOUR_USER/SDRTrunk/recordings")
+OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "YOUR_KEY_HERE")
 
 
 def send_email(subject, content):
-    # Your email details
-    sender_email = "your_sender_email@example.com"
-    receiver_email = "user@user.net"
-    password = "your_email_password"  # NOTE: Use environment variables or secure vaults, don't hard-code passwords
-    # For a higher security standard, Google now requires you to use an “App Password“. 
-    # This is a 16-digit passcode that is generated in your Google account and allows less 
-    # secure apps or devices that don’t support 2-step verification to sign in to your Gmail Account.
+    sender_email = os.environ.get("EMAIL_SENDER", "your_sender_email@example.com")
+    receiver_email = os.environ.get("EMAIL_RECEIVER", "user@user.net")
+    password = os.environ.get("EMAIL_PASSWORD", "your_email_password")
 
     # Create a message
     msg = EmailMessage()
@@ -38,7 +34,7 @@ def send_email(subject, content):
 
     # Send the email
     try:
-        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:  # Change "smtp.example.com" to your SMTP server
+        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
             server.login(sender_email, password)
             server.send_message(msg)
             logger.info(f"Email sent to {receiver_email} successfully!")
@@ -47,10 +43,10 @@ def send_email(subject, content):
 
 
 def pyapi_transcribe_audio(file_path):
-    openai.api_key = OPENAI_API_KEY
+    client = openai.OpenAI(api_key=OPENAI_API_KEY)
     audio_file = open(file_path, "rb")
-    transcript = openai.Audio.transcribe("whisper-1", audio_file)
-    return str(transcript)
+    transcript = client.audio.transcriptions.create(model="whisper-1", file=audio_file)
+    return transcript.text
 
 
 def curl_transcribe_audio(file_path):

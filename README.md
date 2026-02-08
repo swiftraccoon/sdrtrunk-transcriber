@@ -31,8 +31,19 @@ How it Works:
 
 How to Use:
 
-    Replace YOUR_USER in the RECORDINGS_DIR path with the appropriate username.
-    Replace YOUR_KEY_HERE in the OPENAI_API_KEY with your OpenAI API key.
+    Copy `.env.example` to `.env` and fill in your values:
+    ```
+    cp .env.example .env
+    ```
+    Or export environment variables directly:
+    ```
+    export OPENAI_API_KEY="your_key_here"
+    export RECORDINGS_DIR="/home/your_user/SDRTrunk/recordings"
+    ```
+    Install dependencies:
+    ```
+    pip install -r requirements.txt
+    ```
     Ensure all .mp3 files you wish to process are in the specified RECORDINGS_DIR.
     Run the script.
 
@@ -65,10 +76,13 @@ Features:
 
 How to Use:
 
-    Replace OPENAI_API_KEY with your actual OpenAI API key.
+    Set your API key via environment variable:
+    ```
+    export OPENAI_API_KEY="your_key_here"
+    ```
     Run the script in the command line and pass the path of your audio file as an argument, like so:
 
-    python script_name.py path_to_audio_file.mp3
+    python output_transcription.py path_to_audio_file.mp3
 
 
 

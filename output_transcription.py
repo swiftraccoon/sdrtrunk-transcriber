@@ -1,11 +1,12 @@
 import requests
 import sys
+import os
 
 
 def curl_transcribe_audio(file_path):
     # Define the endpoint and your API key
     url = "https://api.openai.com/v1/audio/transcriptions"
-    api_key = "YOUR_KEY_HERE"
+    api_key = os.environ.get("OPENAI_API_KEY", "YOUR_KEY_HERE")
 
     # Setup headers
     headers = {

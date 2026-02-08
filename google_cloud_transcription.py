@@ -1,3 +1,4 @@
+import os
 from google.cloud import speech_v1p1beta1 as speech
 from google.cloud.speech_v1p1beta1 import types
 
@@ -25,7 +26,7 @@ def transcribe_audio_with_hints(gcs_uri, key_file, hints):
 
 
 # Usage example:
-key_file_path = "path_to_your_google_cloud_credentials.json"
+key_file_path = os.environ.get("GOOGLE_CLOUD_CREDENTIALS", "path_to_your_google_cloud_credentials.json")
 audio_file_path = (
     "gs://your_bucket_name/your_audio_file.wav"  # Google Cloud Storage URI
 )

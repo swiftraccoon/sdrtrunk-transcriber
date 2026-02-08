@@ -13,15 +13,15 @@ logger = logging.getLogger()
 
 
 # Configurations
-RECORDINGS_DIR = "/home/YOUR_USER/SDRTrunk/recordings"
-OPENAI_API_KEY = "YOUR_KEY_HERE"
+RECORDINGS_DIR = os.environ.get("RECORDINGS_DIR", "/home/YOUR_USER/SDRTrunk/recordings")
+OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "YOUR_KEY_HERE")
 
 
 def pyapi_transcribe_audio(file_path):
-    openai.api_key = OPENAI_API_KEY
+    client = openai.OpenAI(api_key=OPENAI_API_KEY)
     audio_file = open(file_path, "rb")
-    transcript = openai.Audio.transcribe("whisper-1", audio_file)
-    return str(transcript)
+    transcript = client.audio.transcriptions.create(model="whisper-1", file=audio_file)
+    return transcript.text
 
 
 def curl_transcribe_audio(file_path):
